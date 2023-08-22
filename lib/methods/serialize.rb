@@ -5,7 +5,7 @@ module SlowYourRoles
   class Serialize
     def initialize(base, column_name, _options)
       base.serialize column_name.to_sym, Array
-      base.before_validation(:make_default_roles, on: :create)
+      base.before_create(:make_default_roles, on: :create)
       base.send :define_method, :has_role? do |role|
         self[column_name.to_sym].include?(role)
       end
@@ -71,38 +71,38 @@ module SlowYourRoles
       # different ruby versions or implementations, which may handle object
       # dumping differently. Bitmasking seems to be a more reliable strategy.
 
-      base.class_eval do
-        alias_method :add_roles, :add_role
-        alias_method :add_roles!, :add_role
+      # base.class_eval do
+      #   alias_method :add_roles, :add_role
+      #   alias_method :add_roles!, :add_role
 
-        cattr_accessor :roles_marker
-        cattr_accessor :column
+      #   cattr_accessor :roles_marker
+      #   cattr_accessor :column
 
-        self.roles_marker = '!'
-        self.column = "#{table_name}.#{column_name}"
+      #   self.roles_marker = '!'
+      #   self.column = "#{table_name}.#{column_name}"
 
-        scope :with_role, (proc { |r|
-          where("#{column} LIKE '%#{roles_marker}#{r}#{roles_marker}%'")
-        })
+      #   scope :with_role, (proc { |r|
+      #     where("#{column} LIKE '%#{roles_marker}#{r}#{roles_marker}%'")
+      #   })
 
-        scope :without_role, (proc { |r|
-          where("#{column} NOT LIKE '%#{roles_marker}#{r}#{roles_marker}%' OR #{column} IS NULL")
-        })
+      #   scope :without_role, (proc { |r|
+      #     where("#{column} NOT LIKE '%#{roles_marker}#{r}#{roles_marker}%' OR #{column} IS NULL")
+      #   })
 
-        define_method :add_role_markers do
-          self[column_name.to_sym].map! { |r| [roles_marker, r, roles_marker].join }
-        end
+      #   define_method :add_role_markers do
+      #     self[column_name.to_sym].map! { |r| [roles_marker, r, roles_marker].join }
+      #   end
 
-        define_method :strip_role_markers do
-          self[column_name.to_sym].map! { |r| r.gsub(roles_marker, '') }
-        end
+      #   define_method :strip_role_markers do
+      #     self[column_name.to_sym].map! { |r| r.gsub(roles_marker, '') }
+      #   end
 
-        private :add_role_markers, :strip_role_markers
-        before_save :add_role_markers
-        after_save :strip_role_markers
-        after_rollback :strip_role_markers
-        after_find :strip_role_markers
-      end
+      #   private :add_role_markers, :strip_role_markers
+      #   before_save :add_role_markers
+      #   after_save :strip_role_markers
+      #   after_rollback :strip_role_markers
+      #   after_find :strip_role_markers
+      # end
     end
   end
 end
